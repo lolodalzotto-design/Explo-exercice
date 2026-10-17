@@ -5,7 +5,8 @@ let values=initialValues(),trainer=false,local=false,active=false,connected=fals
 let audio,soundEnabled=false,level=0,ended=false;
 const params=new URLSearchParams(location.hash.slice(1));
 const session=params.get('session');
-function status(t){$('status').textContent=t;}
+if(session)document.body.dataset.mode='student';
+function status(t){$('status').textContent=t;document.body.dataset.receiving=t==='Réception active · simulation'?'true':'false';}
 function fail(e){$('error').hidden=false;$('error').textContent='Action impossible : '+(e.message||String(e));}
 function render(){
  level=alarmLevel(values);document.body.dataset.level=String(level);
@@ -13,9 +14,12 @@ function render(){
  for(const s of sensors){$('value-'+s.key).textContent=values[s.key].toLocaleString('fr-FR',{maximumFractionDigits:s.step<1?1:0});const input=$('input-'+s.key);if(input)input.value=values[s.key];}
 }
 function show(){
+ document.body.dataset.mode=trainer?'trainer':'student';
+ if(!trainer)enableStudentAudio();
+ $('sound').title='Activer ou couper le son';
  $('home').hidden=true;$('exercise').hidden=false;$('controls').hidden=!trainer;
  $('role').textContent=local?'Démonstration locale':trainer?'Télécommande formateur':'Détecteur stagiaire';
- for(const s of sensors){const card=document.createElement('div');card.className='meter';
+ for(const s of sensors){const card=document.createElement('div');card.className='meter';card.dataset.sensor=s.key;
  const label=document.createElement('label');label.textContent=s.label;label.htmlFor='input-'+s.key;
  const output=document.createElement('output');output.id='value-'+s.key;output.className='value';output.setAttribute('aria-label',s.label);
  const unit=document.createElement('span');unit.className='unit';unit.textContent=s.unit;card.append(label,output,unit);
@@ -23,9 +27,19 @@ function show(){
  $('stop').hidden=local;render();
 }
 function usable(){return active&&!ended&&(local||(connected&&(trainer||Date.now()+offset-lastSeen<15000)));}
+function enableStudentAudio(){
+ if(document.body.dataset.mode!=='student')return;
+ try{
+ audio??=new (window.AudioContext||window.webkitAudioContext)();soundEnabled=true;
+ const sync=()=>{document.body.dataset.audio=audio.state==='running'?'ready':'pending';};
+ audio.onstatechange=sync;sync();
+ audio.resume().then(sync).catch(sync);
+ }catch{document.body.dataset.audio='unavailable';}
+}
+for(const event of ['pointerdown','keydown'])document.addEventListener(event,()=>{if(document.body.dataset.mode==='student')enableStudentAudio();},{capture:true});
 function beep(){if(!soundEnabled||!audio||!level||!usable())return;const osc=audio.createOscillator(),gain=audio.createGain();osc.frequency.value=level===2?1100:800;gain.gain.setValueAtTime(.12,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.16);osc.connect(gain).connect(audio.destination);osc.start();osc.stop(audio.currentTime+.17);}
 setInterval(beep,450);
-$('sound').onclick=async()=>{try{audio??=new (window.AudioContext||window.webkitAudioContext)();await audio.resume();soundEnabled=!soundEnabled;$('sound').textContent=soundEnabled?'Couper le son':'Activer le son';}catch(e){fail(e);}};
+$('sound').onclick=async()=>{if(document.body.dataset.mode==='student'){enableStudentAudio();return;}try{audio??=new (window.AudioContext||window.webkitAudioContext)();await audio.resume();soundEnabled=!soundEnabled;$('sound').textContent=soundEnabled?'Couper le son':'Activer le son';$('sound').setAttribute('aria-label',$('sound').textContent);$('sound').setAttribute('aria-pressed',String(soundEnabled));}catch(e){fail(e);}};
 async function publish(){if(!trainer||local||!active||ended||!connected)return;try{await api.update(sessionRef,{values,updatedAt:api.serverTimestamp(),active:true});}catch(e){fail(e);}}
 function schedule(){clearTimeout(timer);timer=setTimeout(publish,100);}
 $('reset').onclick=()=>{values=initialValues();render();schedule();};

@@ -1,1 +1,48 @@
 :root{font-family:system-ui,sans-serif;color:#edf5f5;background:#10252c;color-scheme:dark}*{box-sizing:border-box}body{margin:0}main{max-width:760px;margin:auto;padding:28px 18px}header{margin-bottom:28px}h1{font-size:38px;letter-spacing:-1.5px;margin:12px 0}h1 span{color:#ffb45c;margin-left:8px}h2{font-size:21px}.tag{font-size:11px;letter-spacing:2px;color:#ffb45c}p{line-height:1.55;color:#bed1d5}section{padding:22px;background:#19343d;border:1px solid #38525a;border-radius:20px}button{font:inherit;font-weight:650;cursor:pointer;border:0;border-radius:11px;background:#ffb45c;color:#18262a;padding:14px 18px;margin:6px 5px 6px 0;min-height:48px}button:disabled{opacity:.45;cursor:not-allowed}.secondary{background:#294650;color:#edf5f5}.top{display:flex;justify-content:space-between;align-items:center;gap:8px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.meter{background:#10252c;padding:18px;border-radius:14px;border:1px solid #38525a}.meter label{font-weight:700}.value{display:block;font-size:48px;font-weight:700;font-variant-numeric:tabular-nums;margin:10px 0}.unit{font-size:14px;color:#bed1d5}input{width:100%;min-height:48px;accent-color:#ffb45c}#alarm,#status{padding:12px;border-radius:10px;background:#294650}body[data-level="1"] #alarm{background:#6d4b13;color:#ffe4a9}body[data-level="2"] #alarm{background:#932e35;color:white}#error{background:#932e35;color:white;padding:14px;overflow-wrap:anywhere}.note,footer{font-size:12px}footer{margin-top:24px;color:#8da6ad}details{margin-top:20px}summary{cursor:pointer;padding:12px 0}a{color:#ffcd91;overflow-wrap:anywhere;display:block;margin:12px 0}#qr{background:white;padding:12px;width:max-content;max-width:100%}#qr:empty{display:none}[hidden]{display:none!important}@media(max-width:420px){section{padding:15px}.meter{padding:12px}.value{font-size:39px}.top{align-items:flex-start;flex-direction:column}}
+
+/* The trainee sees the detector only; trainer controls retain their layout. */
+.device{display:contents}.device-lamp,.side-lamp,.device-name,.device-dot,.sensor-assembly,.device-caption,.lcd-bottom{display:none}
+body[data-mode="student"]{background:#f4f4f1;color:#242823;color-scheme:light}
+body[data-mode="student"] main{max-width:480px;min-height:100svh;padding:14px 16px;display:flex;align-items:center;justify-content:center;flex-direction:column}
+body[data-mode="student"] header,body[data-mode="student"] footer,body[data-mode="student"] #role,body[data-mode="student"] .note{display:none}
+body[data-mode="student"] #home{display:none}
+body[data-mode="student"] #exercise{padding:0;border:0;background:none;width:100%;position:relative}
+body[data-mode="student"] .top{display:contents}
+body[data-mode="student"] #status{position:relative;width:100%;padding:9px 12px;margin:0 0 10px;background:#e3e5df;color:#454a42;font-size:13px;text-align:center}
+body[data-mode="student"][data-receiving="true"] #status{display:none}
+body[data-mode="student"] #error{width:100%}
+body[data-mode="student"] .device{display:block;position:relative;width:min(100%,350px);aspect-ratio:0.54;margin:auto;border-radius:21% 21% 22% 22% / 5% 5% 9% 9%;background:linear-gradient(90deg,#d6b400 0%,#ffdb0a 5%,#ffe72c 17%,#fbe10f 45%,#ffe82e 72%,#eac900 94%,#c4a600 100%);border:2px solid #e0bd00;box-shadow:inset 0 5px 6px #fff78c,inset 7px 0 12px #bba20066,inset -7px 0 12px #b7a00066,0 17px 28px #30372b22;container-type:inline-size}
+body[data-mode="student"] .device-lamp{display:block;position:absolute;left:17%;right:17%;top:2%;height:5%;background:linear-gradient(#b6bd69,#d1db8c);border:3px solid #dec126;border-radius:25% 25% 10% 10%;box-shadow:inset 0 2px 7px #737e4355}
+body[data-mode="student"] .side-lamp{display:block;position:absolute;width:4.7%;top:12%;height:25%;background:linear-gradient(90deg,#b3ac91,#d6cdb7,#a3a18a);border:2px solid #d8bc16;border-radius:5px}
+body[data-mode="student"] .side-lamp.left{left:2%}body[data-mode="student"] .side-lamp.right{right:2%}
+body[data-mode="student"] .screen-bezel{position:absolute;top:10%;left:15%;right:15%;height:33%;padding:4px;background:#403e36;border:3px solid #c6ad44;border-radius:8% 8% 12% 12% / 5% 5% 8% 8%;box-shadow:0 2px 3px #5d4a3d80}
+body[data-mode="student"] .lcd{height:84%;padding:13% 4% 2%;background:linear-gradient(120deg,#b5bdb3,#cbd1c4 47%,#afb9ab);border:1px solid #65695f;box-shadow:inset 0 3px 10px #5e68534d;position:relative}
+body[data-mode="student"] .grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:0;height:95%}
+body[data-mode="student"] .meter{padding:0;border:0;border-radius:0;background:none;display:flex;flex-wrap:wrap;align-content:center;justify-content:flex-end;column-gap:3px}
+body[data-mode="student"] .meter[data-sensor="h2s"]{grid-area:1/1}
+body[data-mode="student"] .meter[data-sensor="co"]{grid-area:1/2}
+body[data-mode="student"] .meter[data-sensor="o2"]{grid-area:2/1}
+body[data-mode="student"] .meter[data-sensor="lie"]{grid-area:2/2}
+body[data-mode="student"] .value{order:-1;flex-basis:100%;margin:0;font-family:"Courier New",monospace;font-style:italic;font-weight:400;letter-spacing:-.11em;padding-right:.08em;font-size:15cqw;line-height:.9;color:#343e33;text-align:right;font-variant-numeric:tabular-nums}
+body[data-mode="student"] .meter label,body[data-mode="student"] .unit{color:#343e33;font:bold italic 3.5cqw Arial,sans-serif;line-height:1.1}
+body[data-mode="student"] .lcd-bottom{display:flex;position:absolute;bottom:1%;left:46%;font-size:3.5cqw;color:#414b3d;gap:8px}.lcd-bell{visibility:hidden}
+body[data-mode="student"] .device-name{display:flex;justify-content:space-between;align-items:center;height:16%;padding:0 4%;font-size:3.5cqw;color:#e5e2cf;font-style:italic;background:linear-gradient(#373938,#171d1e)}
+body[data-mode="student"] .device-name b{font-size:5cqw;color:#b8b5a5}
+body[data-mode="student"] .device-dot{display:block;position:absolute;top:49%;left:23%;width:4.4%;aspect-ratio:1;border:4px solid #d0ae07;background:#363427;border-radius:50%;box-shadow:0 0 0 4px #ffe44a}
+body[data-mode="student"] #sound{position:absolute;z-index:2;top:48.2%;left:calc(50% + min(15vw,58px));width:54px;min-height:0;height:33px;padding:0;margin:0;border-radius:13px;transform:rotate(-5deg);border:5px solid #d3b500;background:#6b82ca;box-shadow:0 0 0 2px #ffe637,inset 0 1px 3px #b8c8ff;font-size:0}
+body[data-mode="student"] #sound:focus-visible{outline:3px solid #26374a;outline-offset:5px}
+body[data-mode="student"] #sound[aria-pressed="true"]{background:#425d9b}
+body[data-mode="student"] .sensor-assembly{display:block;position:absolute;left:26%;top:63%;width:48%;aspect-ratio:1;border:12px solid #4f4c3b;border-radius:42%;background:radial-gradient(circle,#e1c500 30%,#fee023 60%);box-shadow:0 0 0 3px #c6ac1f}
+body[data-mode="student"] .sensor-assembly i{position:absolute;width:32%;aspect-ratio:1;border-radius:50%;border:5px solid #625b4a;background:radial-gradient(circle,#e7e2d5 48%,#a9a28e 52%,#f1dd9d 64%,#6d624c 70%);box-shadow:0 0 0 3px #d6ba34}
+body[data-mode="student"] .sensor-assembly i:nth-child(1){left:-19%;top:-19%}body[data-mode="student"] .sensor-assembly i:nth-child(2){right:-19%;top:-19%}body[data-mode="student"] .sensor-assembly i:nth-child(3){left:-19%;bottom:-19%}body[data-mode="student"] .sensor-assembly i:nth-child(4){right:-19%;bottom:-19%}
+body[data-mode="student"] .device-caption{display:block;position:absolute;bottom:3%;width:100%;text-align:center;font:bold 2.5cqw Arial,sans-serif;letter-spacing:.12em;color:#89780c}
+body[data-mode="student"] #alarm{position:absolute;z-index:1;top:19%;left:23%;right:23%;padding:0;margin:0;font-size:0;background:none;color:#303c30;text-align:center}
+body[data-mode="student"][data-level="1"] #alarm,body[data-mode="student"][data-level="2"] #alarm{font:bold 10px Arial,sans-serif;background:none;color:#303c30}
+body[data-mode="student"][data-level="1"] .device-lamp,body[data-mode="student"][data-level="2"] .device-lamp,body[data-mode="student"][data-level="1"] .side-lamp,body[data-mode="student"][data-level="2"] .side-lamp{background:#fa3b28;box-shadow:0 0 20px #f8332677;animation:detector-flash 1s steps(2,end) infinite}
+body[data-mode="student"][data-level="2"] .device-lamp,body[data-mode="student"][data-level="2"] .side-lamp{animation-duration:.5s}
+@keyframes detector-flash{50%{opacity:.35}}
+@media(prefers-reduced-motion:reduce){body[data-mode="student"] .device-lamp,body[data-mode="student"] .side-lamp{animation:none!important}}
+@media(max-height:720px) and (min-width:360px){body[data-mode="student"] .device{width:min(100%,300px)}}
+
+body[data-mode="student"][data-audio="pending"] .device::after{content:"Touchez le détecteur pour démarrer";position:absolute;bottom:-34px;left:-5%;width:110%;font:13px system-ui,sans-serif;text-align:center;color:#666b60}
+body[data-mode="student"][data-audio="unavailable"] .device::after{content:"Son indisponible sur ce navigateur";position:absolute;bottom:-34px;left:-5%;width:110%;font:13px system-ui,sans-serif;text-align:center;color:#923c30}
