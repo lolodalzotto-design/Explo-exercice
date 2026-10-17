@@ -46,3 +46,15 @@ body[data-mode="student"][data-level="2"] .device-lamp,body[data-mode="student"]
 
 body[data-mode="student"][data-audio="pending"] .device::after{content:"Touchez le détecteur pour démarrer";position:absolute;bottom:-34px;left:-5%;width:110%;font:13px system-ui,sans-serif;text-align:center;color:#666b60}
 body[data-mode="student"][data-audio="unavailable"] .device::after{content:"Son indisponible sur ce navigateur";position:absolute;bottom:-34px;left:-5%;width:110%;font:13px system-ui,sans-serif;text-align:center;color:#923c30}
+
+/* One start action for the trainer, with the QR immediately visible. */
+#home{text-align:center;padding:28px 18px}
+#home #create{display:block;width:100%;margin:0;font-size:20px;min-height:68px}
+#pairing{text-align:center;margin:0 0 24px;padding:0 0 22px;border-bottom:1px solid #38525a}
+#pairing h2{margin:0 0 16px}
+#pairing #qr{margin:0 auto}
+#pairing a{font-size:14px}
+body[data-mode="trainer"] #sound,body[data-mode="trainer"] .note{display:none}
+body[data-mode="trainer"] .top{margin-top:12px}
+body[data-mode="trainer"] #role{font-size:18px}
+body[data-mode="trainer"] #controls{margin-top:18px}

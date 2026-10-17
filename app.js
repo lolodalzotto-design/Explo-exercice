@@ -17,7 +17,7 @@ function show(){
  document.body.dataset.mode=trainer?'trainer':'student';
  if(!trainer)enableStudentAudio();
  $('sound').title='Activer ou couper le son';
- $('home').hidden=true;$('exercise').hidden=false;$('controls').hidden=!trainer;
+ $('home').hidden=true;$('exercise').hidden=false;$('controls').hidden=!trainer;$('pairing').hidden=!trainer;
  $('role').textContent=local?'Démonstration locale':trainer?'Télécommande formateur':'Détecteur stagiaire';
  for(const s of sensors){const card=document.createElement('div');card.className='meter';card.dataset.sensor=s.key;
  const label=document.createElement('label');label.textContent=s.label;label.htmlFor='input-'+s.key;
@@ -44,10 +44,9 @@ async function publish(){if(!trainer||local||!active||ended||!connected)return;t
 function schedule(){clearTimeout(timer);timer=setTimeout(publish,100);}
 $('reset').onclick=()=>{values=initialValues();render();schedule();};
 $('stop').onclick=async()=>{try{clearTimeout(timer);await api.update(sessionRef,{active:false,updatedAt:api.serverTimestamp()});ended=true;active=false;clearInterval(heartbeat);status('Session terminée. Recharge la page pour en créer une autre.');document.querySelectorAll('input, #reset, #stop').forEach(el=>el.disabled=true);}catch(e){fail(e);}};
-$('demo').onclick=()=>{local=trainer=active=true;show();$('controls').querySelector('details').hidden=true;status('DÉMONSTRATION LOCALE — aucune liaison avec un autre téléphone');};
 $('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('join').href);$('copyStatus').textContent='Lien copié.';}catch{$('copyStatus').textContent='Copie manuellement l’adresse du lien stagiaire.';}};
 async function initialize(){
- if(!firebaseConfig){$('create').disabled=true;$('setup').hidden=false;status('Firebase à configurer · démonstration disponible');if(session)fail(new Error('La liaison distante n’est pas encore configurée.'));return;}
+ if(!firebaseConfig){$('create').disabled=true;status('Connexion indisponible');fail(new Error('La liaison distante n’est pas configurée.'));return;}
  const base='https://www.gstatic.com/firebasejs/13.0.0/';
  const [appMod,authMod,dbMod]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-database.js')]);
  api=dbMod;const app=appMod.initializeApp(firebaseConfig);const auth=authMod.getAuth(app);await authMod.signInAnonymously(auth);uid=auth.currentUser.uid;const db=api.getDatabase(app);
@@ -56,10 +55,10 @@ async function initialize(){
  if(session){if(!/^[a-f0-9]{32}$/.test(session))throw Error('Lien de session invalide.');sessionRef=api.ref(db,'sessions/'+session);trainer=false;show();
  api.onValue(sessionRef,snap=>{const data=snap.val();if(!data){active=false;status('Session introuvable ou supprimée');return;}if(!validValues(data.values)){active=false;fail(new Error('Valeurs de session invalides.'));return;}values=data.values;active=data.active===true;ended=!active;lastSeen=data.updatedAt||0;render();},fail);
  setInterval(()=>{if(local)return;status(!active?'Session inactive ou terminée':!connected?'Connexion interrompue — valeurs figées':Date.now()+offset-lastSeen>=15000?'Signal formateur perdu — valeurs figées':'Réception active · simulation');},1000);
- }else{status('Prêt à créer une session distante');$('create').disabled=false;}
- $('create').onclick=async()=>{if(local)return;try{$('create').disabled=true;const bytes=crypto.getRandomValues(new Uint8Array(16));const id=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');sessionRef=api.ref(db,'sessions/'+id);await api.set(sessionRef,{owner:uid,active:true,values,updatedAt:api.serverTimestamp()});trainer=active=true;show();const url=new URL(location.href);url.hash=new URLSearchParams({session:id}).toString();$('join').href=url.href;
+ }else{status('Prêt à démarrer');$('create').disabled=false;}
+ $('create').onclick=async()=>{if(local)return;try{$('create').disabled=true;const bytes=crypto.getRandomValues(new Uint8Array(16));const id=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');sessionRef=api.ref(db,'sessions/'+id);await api.set(sessionRef,{owner:uid,active:true,values,updatedAt:api.serverTimestamp()});trainer=active=true;show();const url=new URL(location.href);url.search='?v=3';url.hash=new URLSearchParams({session:id}).toString();$('join').href=url.href;
  if(window.QRCode)new window.QRCode($('qr'),{text:url.href,width:200,height:200});else $('copyStatus').textContent='QR code indisponible : utilise le lien.';
- heartbeat=setInterval(publish,5000);status('Session créée · commandes envoyées à Firebase');
+ heartbeat=setInterval(publish,5000);status('Exercice en cours');
  }catch(e){$('create').disabled=false;fail(e);}};
 }
-$('create').disabled=true;initialize().catch(e=>{status('Connexion indisponible · démonstration locale disponible');fail(e);});
+$('create').disabled=true;initialize().catch(e=>{status('Connexion indisponible. Réessaie en rechargeant la page.');fail(e);});
