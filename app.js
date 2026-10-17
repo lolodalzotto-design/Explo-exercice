@@ -2,15 +2,19 @@ import {firebaseConfig} from './firebase-config.js';
 import {sensors,initialValues,alarmLevel,validValues} from './model.mjs';
 const $=id=>document.getElementById(id);
 let values=initialValues(),trainer=false,local=false,active=false,connected=false,lastSeen=0,offset=0,sessionRef,api,uid,heartbeat,timer;
-let audio,soundEnabled=false,level=0,ended=false;
+let audio,soundEnabled=false,level=0,ended=false,acknowledgedLevel=0;
+const soundingTones=new Set();
 const params=new URLSearchParams(location.hash.slice(1));
 const session=params.get('session');
 if(session)document.body.dataset.mode='student';
 function status(t){$('status').textContent=t;document.body.dataset.receiving=t==='Réception active · simulation'?'true':'false';}
 function fail(e){$('error').hidden=false;const message=e.code||/firebase/i.test(e.message||'')?'La connexion ou l’action a échoué. Vérifie ta connexion et réessaie.':(e.message||'Réessaie dans un instant.');$('error').textContent='Action impossible : '+message;}
 function render(){
- level=alarmLevel(values);document.body.dataset.level=String(level);
+ level=alarmLevel(values);if(level===0)acknowledgedLevel=0;document.body.dataset.level=String(level);
+ const acknowledged=!trainer&&level>0&&acknowledgedLevel>=level;document.body.dataset.acknowledged=String(acknowledged);
  $('alarm').textContent=level===2?'ALARME LIE · NIVEAU 2 — dès 20 %':level===1?'ALARME LIE · NIVEAU 1 — dès 10 %':'Aucune alarme LIE';
+ const alarmText=$('alarm').textContent+(acknowledged?' · acquittée':'');$('alarm').setAttribute('aria-label',alarmText);
+ if(!trainer&&level>0)$('alarm').textContent='AL'+level+(acknowledged?' · ACQ':'');
  for(const s of sensors){$('value-'+s.key).textContent=values[s.key].toLocaleString('fr-FR',{maximumFractionDigits:s.step<1?1:0});const input=$('input-'+s.key);if(input)input.value=values[s.key];}
 }
 function show(){
@@ -50,6 +54,13 @@ function addManualEntry(card,s){
  form.append(field,hint,save,cancel);card.append(edit,form);
 }
 
+function acknowledgeAlarm(){
+ if(trainer||!active||ended||level===0)return;
+ acknowledgedLevel=Math.max(acknowledgedLevel,level);
+ for(const tone of soundingTones){try{tone.stop();}catch{}}
+ soundingTones.clear();render();
+}
+document.querySelectorAll('.ack-button').forEach(button=>{button.onclick=acknowledgeAlarm;});
 function usable(){return active&&!ended&&(local||(connected&&(trainer||Date.now()+offset-lastSeen<15000)));}
 function enableStudentAudio(){
  if(document.body.dataset.mode!=='student')return;
@@ -61,9 +72,9 @@ function enableStudentAudio(){
  }catch{document.body.dataset.audio='unavailable';}
 }
 for(const event of ['pointerdown','keydown'])document.addEventListener(event,()=>{if(document.body.dataset.mode==='student')enableStudentAudio();},{capture:true});
-function beep(){if(!soundEnabled||!audio||audio.state!=='running'||!level||!usable())return;const osc=audio.createOscillator(),gain=audio.createGain();osc.frequency.value=level===2?1100:800;gain.gain.setValueAtTime(.12,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.16);osc.connect(gain).connect(audio.destination);osc.start();osc.stop(audio.currentTime+.17);}
+function beep(){if(!soundEnabled||!audio||audio.state!=='running'||!level||(!trainer&&acknowledgedLevel>=level)||!usable())return;const osc=audio.createOscillator(),gain=audio.createGain();osc.frequency.value=level===2?1100:800;gain.gain.setValueAtTime(.12,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.16);osc.connect(gain).connect(audio.destination);soundingTones.add(osc);osc.onended=()=>soundingTones.delete(osc);osc.start();osc.stop(audio.currentTime+.17);}
 setInterval(beep,450);
-$('sound').onclick=async()=>{if(document.body.dataset.mode==='student'){enableStudentAudio();return;}try{audio??=new (window.AudioContext||window.webkitAudioContext)();await audio.resume();soundEnabled=!soundEnabled;$('sound').textContent=soundEnabled?'Couper le son':'Activer le son';$('sound').setAttribute('aria-label',$('sound').textContent);$('sound').setAttribute('aria-pressed',String(soundEnabled));}catch(e){fail(e);}};
+$('sound').onclick=async()=>{if(document.body.dataset.mode==='student'){enableStudentAudio();acknowledgeAlarm();return;}try{audio??=new (window.AudioContext||window.webkitAudioContext)();await audio.resume();soundEnabled=!soundEnabled;$('sound').textContent=soundEnabled?'Couper le son':'Activer le son';$('sound').setAttribute('aria-label',$('sound').textContent);$('sound').setAttribute('aria-pressed',String(soundEnabled));}catch(e){fail(e);}};
 async function publish(){if(!trainer||local||!active||ended||!connected)return;try{await api.update(sessionRef,{values,updatedAt:api.serverTimestamp(),active:true});}catch(e){fail(e);}}
 function schedule(){clearTimeout(timer);timer=setTimeout(publish,100);}
 $('reset').onclick=()=>{values=initialValues();render();schedule();};
@@ -80,7 +91,7 @@ async function initialize(){
  api.onValue(sessionRef,snap=>{const data=snap.val();if(!data){active=false;status('Session introuvable ou supprimée');return;}if(!validValues(data.values)){active=false;fail(new Error('Valeurs de session invalides.'));return;}values=data.values;active=data.active===true;ended=!active;lastSeen=data.updatedAt||0;render();},fail);
  setInterval(()=>{if(local)return;status(!active?'Session inactive ou terminée':!connected?'Connexion interrompue — valeurs figées':Date.now()+offset-lastSeen>=15000?'Signal formateur perdu — valeurs figées':'Réception active · simulation');},1000);
  }else{status('Prêt à démarrer');$('create').disabled=false;}
- $('create').onclick=async()=>{if(local)return;try{$('create').disabled=true;const bytes=crypto.getRandomValues(new Uint8Array(16));const id=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');sessionRef=api.ref(db,'sessions/'+id);await api.set(sessionRef,{owner:uid,active:true,values,updatedAt:api.serverTimestamp()});trainer=active=true;show();const url=new URL(location.href);url.search='?v=4';url.hash=new URLSearchParams({session:id}).toString();$('join').href=url.href;
+ $('create').onclick=async()=>{if(local)return;try{$('create').disabled=true;const bytes=crypto.getRandomValues(new Uint8Array(16));const id=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');sessionRef=api.ref(db,'sessions/'+id);await api.set(sessionRef,{owner:uid,active:true,values,updatedAt:api.serverTimestamp()});trainer=active=true;show();const url=new URL(location.href);url.search='?v=5';url.hash=new URLSearchParams({session:id}).toString();$('join').href=url.href;
  if(window.QRCode)new window.QRCode($('qr'),{text:url.href,width:200,height:200});else $('copyStatus').textContent='QR code indisponible : utilise le lien.';
  heartbeat=setInterval(publish,5000);status('Exercice en cours');
  }catch(e){$('create').disabled=false;fail(e);}};

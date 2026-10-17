@@ -33,8 +33,8 @@ body[data-mode="student"] #sound{position:absolute;z-index:2;top:48.2%;left:calc
 body[data-mode="student"] #sound:focus-visible{outline:3px solid #26374a;outline-offset:5px}
 body[data-mode="student"] #sound[aria-pressed="true"]{background:#425d9b}
 body[data-mode="student"] .sensor-assembly{display:block;position:absolute;left:26%;top:63%;width:48%;aspect-ratio:1;border:12px solid #4f4c3b;border-radius:42%;background:radial-gradient(circle,#e1c500 30%,#fee023 60%);box-shadow:0 0 0 3px #c6ac1f}
-body[data-mode="student"] .sensor-assembly i{position:absolute;width:32%;aspect-ratio:1;border-radius:50%;border:5px solid #625b4a;background:radial-gradient(circle,#e7e2d5 48%,#a9a28e 52%,#f1dd9d 64%,#6d624c 70%);box-shadow:0 0 0 3px #d6ba34}
-body[data-mode="student"] .sensor-assembly i:nth-child(1){left:-19%;top:-19%}body[data-mode="student"] .sensor-assembly i:nth-child(2){right:-19%;top:-19%}body[data-mode="student"] .sensor-assembly i:nth-child(3){left:-19%;bottom:-19%}body[data-mode="student"] .sensor-assembly i:nth-child(4){right:-19%;bottom:-19%}
+body[data-mode="student"] .sensor-assembly .ack-button{position:absolute;width:32%;aspect-ratio:1;border-radius:50%;border:5px solid #625b4a;background:radial-gradient(circle,#e7e2d5 48%,#a9a28e 52%,#f1dd9d 64%,#6d624c 70%);box-shadow:0 0 0 3px #d6ba34}
+body[data-mode="student"] .sensor-assembly .ack-button:nth-child(1){left:-19%;top:-19%}body[data-mode="student"] .sensor-assembly .ack-button:nth-child(2){right:-19%;top:-19%}body[data-mode="student"] .sensor-assembly .ack-button:nth-child(3){left:-19%;bottom:-19%}body[data-mode="student"] .sensor-assembly .ack-button:nth-child(4){right:-19%;bottom:-19%}
 body[data-mode="student"] .device-caption{display:block;position:absolute;bottom:3%;width:100%;text-align:center;font:bold 2.5cqw Arial,sans-serif;letter-spacing:.12em;color:#89780c}
 body[data-mode="student"] #alarm{position:absolute;z-index:1;top:19%;left:23%;right:23%;padding:0;margin:0;font-size:0;background:none;color:#303c30;text-align:center}
 body[data-mode="student"][data-level="1"] #alarm,body[data-mode="student"][data-level="2"] #alarm{font:bold 10px Arial,sans-serif;background:none;color:#303c30}
@@ -68,3 +68,8 @@ body[data-mode="trainer"] .meter{position:relative}
 .manual-entry input{grid-column:1/-1;min-width:0;min-height:48px;border:1px solid #6c8992;border-radius:9px;background:#19343d;color:#fff;padding:8px 12px;font:inherit;font-size:21px}
 .manual-entry small{grid-column:1/-1;color:#bed1d5;font-size:12px}
 .manual-entry button{padding:9px 6px;margin:0;font-size:14px;min-width:0}
+
+body[data-mode="student"] .sensor-assembly .ack-button{padding:0;margin:0;min-height:44px;min-width:44px;cursor:pointer;touch-action:manipulation}
+body[data-mode="student"] .sensor-assembly .ack-button:focus-visible{outline:3px solid #26374a;outline-offset:5px}
+body[data-mode="student"] .sensor-assembly .ack-button:active{filter:brightness(.8)}
+body[data-mode="student"] #alarm{top:13%;left:26%;right:26%}
