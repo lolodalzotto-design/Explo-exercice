@@ -1,0 +1,25 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "sessions": {
+      "$session": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('owner').val() === auth.uid) || data.child('owner').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['owner','active','values','updatedAt'])",
+        "owner": {".validate": "newData.isString() && newData.val() === auth.uid"},
+        "active": {".validate": "newData.isBoolean()"},
+        "updatedAt": {".validate": "newData.isNumber() && newData.val() <= now"},
+        "values": {
+          ".validate": "newData.hasChildren(['lie','co','h2s','o2'])",
+          "lie": {".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"},
+          "co": {".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000"},
+          "h2s": {".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"},
+          "o2": {".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 25"},
+          "$other": {".validate": false}
+        },
+        "$other": {".validate": false}
+      }
+    }
+  }
+}
