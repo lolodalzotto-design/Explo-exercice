@@ -37,7 +37,7 @@ function enableStudentAudio(){
  }catch{document.body.dataset.audio='unavailable';}
 }
 for(const event of ['pointerdown','keydown'])document.addEventListener(event,()=>{if(document.body.dataset.mode==='student')enableStudentAudio();},{capture:true});
-function beep(){if(!soundEnabled||!audio||!level||!usable())return;const osc=audio.createOscillator(),gain=audio.createGain();osc.frequency.value=level===2?1100:800;gain.gain.setValueAtTime(.12,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.16);osc.connect(gain).connect(audio.destination);osc.start();osc.stop(audio.currentTime+.17);}
+function beep(){if(!soundEnabled||!audio||audio.state!=='running'||!level||!usable())return;const osc=audio.createOscillator(),gain=audio.createGain();osc.frequency.value=level===2?1100:800;gain.gain.setValueAtTime(.12,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.16);osc.connect(gain).connect(audio.destination);osc.start();osc.stop(audio.currentTime+.17);}
 setInterval(beep,450);
 $('sound').onclick=async()=>{if(document.body.dataset.mode==='student'){enableStudentAudio();return;}try{audio??=new (window.AudioContext||window.webkitAudioContext)();await audio.resume();soundEnabled=!soundEnabled;$('sound').textContent=soundEnabled?'Couper le son':'Activer le son';$('sound').setAttribute('aria-label',$('sound').textContent);$('sound').setAttribute('aria-pressed',String(soundEnabled));}catch(e){fail(e);}};
 async function publish(){if(!trainer||local||!active||ended||!connected)return;try{await api.update(sessionRef,{values,updatedAt:api.serverTimestamp(),active:true});}catch(e){fail(e);}}
