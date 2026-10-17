@@ -7,7 +7,7 @@ const params=new URLSearchParams(location.hash.slice(1));
 const session=params.get('session');
 if(session)document.body.dataset.mode='student';
 function status(t){$('status').textContent=t;document.body.dataset.receiving=t==='Réception active · simulation'?'true':'false';}
-function fail(e){$('error').hidden=false;$('error').textContent='Action impossible : '+(e.message||String(e));}
+function fail(e){$('error').hidden=false;const message=e.code||/firebase/i.test(e.message||'')?'La connexion ou l’action a échoué. Vérifie ta connexion et réessaie.':(e.message||'Réessaie dans un instant.');$('error').textContent='Action impossible : '+message;}
 function render(){
  level=alarmLevel(values);document.body.dataset.level=String(level);
  $('alarm').textContent=level===2?'ALARME LIE · NIVEAU 2 — dès 20 %':level===1?'ALARME LIE · NIVEAU 1 — dès 10 %':'Aucune alarme LIE';
@@ -23,9 +23,33 @@ function show(){
  const label=document.createElement('label');label.textContent=s.label;label.htmlFor='input-'+s.key;
  const output=document.createElement('output');output.id='value-'+s.key;output.className='value';output.setAttribute('aria-label',s.label);
  const unit=document.createElement('span');unit.className='unit';unit.textContent=s.unit;card.append(label,output,unit);
- if(trainer){const input=document.createElement('input');Object.assign(input,{type:'range',id:'input-'+s.key,min:'0',max:String(s.max),step:String(s.step),value:String(values[s.key])});input.setAttribute('aria-label',s.label+' en '+s.unit);input.oninput=()=>{values[s.key]=Number(input.value);render();schedule();};card.append(input);} $('meters').append(card);}
+ if(trainer){const input=document.createElement('input');Object.assign(input,{type:'range',id:'input-'+s.key,min:'0',max:String(s.max),step:String(s.step),value:String(values[s.key])});input.setAttribute('aria-label',s.label+' en '+s.unit);input.oninput=()=>{values[s.key]=Number(input.value);render();schedule();};card.append(input);addManualEntry(card,s);} $('meters').append(card);}
  $('stop').hidden=local;render();
 }
+
+function addManualEntry(card,s){
+ const edit=document.createElement('button');edit.type='button';edit.className='edit-value';
+ edit.setAttribute('aria-label','Modifier '+s.label);edit.title='Saisir '+s.label;edit.setAttribute('aria-expanded','false');
+ edit.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6Z"/><path d="m14 5 5 5"/></svg>';
+ const form=document.createElement('form');form.className='manual-entry';form.hidden=true;form.noValidate=true;form.id='edit-form-'+s.key;edit.setAttribute('aria-controls',form.id);
+ const field=document.createElement('input');field.type='text';field.inputMode=s.step<1?'decimal':'numeric';field.autocomplete='off';field.id='manual-'+s.key;field.setAttribute('aria-label','Saisir '+s.label+' en '+s.unit);
+ const hint=document.createElement('small');hint.id='hint-'+s.key;hint.textContent='0 à '+s.max+' '+s.unit+(s.step<1?' · pas de 0,1':' · nombres entiers');field.setAttribute('aria-describedby',hint.id);
+ const save=document.createElement('button');save.type='submit';save.textContent='Valider';
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.textContent='Annuler';
+ const close=()=>{form.hidden=true;edit.setAttribute('aria-expanded','false');field.setCustomValidity('');edit.focus();};
+ edit.onclick=()=>{if(!form.hidden){close();return;}field.value=String(values[s.key]).replace('.',',');field.setCustomValidity('');form.hidden=false;edit.setAttribute('aria-expanded','true');field.focus();field.select();};
+ field.oninput=()=>field.setCustomValidity('');
+ field.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close();}};
+ cancel.onclick=close;
+ form.onsubmit=e=>{e.preventDefault();if(ended)return;
+ const raw=field.value.trim().replace(',','.'),value=Number(raw);
+ if(!/^(?:\d+(?:\.\d+)?|\.\d+)$/.test(raw)||!Number.isFinite(value)||value<0||value>s.max||Math.abs(value/s.step-Math.round(value/s.step))>1e-7){
+ field.setCustomValidity('Saisis une valeur de 0 à '+s.max+' '+s.unit+(s.step<1?', avec au maximum une décimale.':', sans décimale.'));field.reportValidity();return;}
+ values[s.key]=Number(value.toFixed(s.step<1?1:0));render();schedule();close();
+ };
+ form.append(field,hint,save,cancel);card.append(edit,form);
+}
+
 function usable(){return active&&!ended&&(local||(connected&&(trainer||Date.now()+offset-lastSeen<15000)));}
 function enableStudentAudio(){
  if(document.body.dataset.mode!=='student')return;
@@ -43,7 +67,7 @@ $('sound').onclick=async()=>{if(document.body.dataset.mode==='student'){enableSt
 async function publish(){if(!trainer||local||!active||ended||!connected)return;try{await api.update(sessionRef,{values,updatedAt:api.serverTimestamp(),active:true});}catch(e){fail(e);}}
 function schedule(){clearTimeout(timer);timer=setTimeout(publish,100);}
 $('reset').onclick=()=>{values=initialValues();render();schedule();};
-$('stop').onclick=async()=>{try{clearTimeout(timer);await api.update(sessionRef,{active:false,updatedAt:api.serverTimestamp()});ended=true;active=false;clearInterval(heartbeat);status('Session terminée. Recharge la page pour en créer une autre.');document.querySelectorAll('input, #reset, #stop').forEach(el=>el.disabled=true);}catch(e){fail(e);}};
+$('stop').onclick=async()=>{try{clearTimeout(timer);await api.update(sessionRef,{active:false,updatedAt:api.serverTimestamp()});ended=true;active=false;clearInterval(heartbeat);status('Session terminée. Recharge la page pour en créer une autre.');document.querySelectorAll('input, .edit-value, .manual-entry button, #reset, #stop').forEach(el=>el.disabled=true);}catch(e){fail(e);}};
 $('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('join').href);$('copyStatus').textContent='Lien copié.';}catch{$('copyStatus').textContent='Copie manuellement l’adresse du lien stagiaire.';}};
 async function initialize(){
  if(!firebaseConfig){$('create').disabled=true;status('Connexion indisponible');fail(new Error('La liaison distante n’est pas configurée.'));return;}
@@ -51,12 +75,12 @@ async function initialize(){
  const [appMod,authMod,dbMod]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-database.js')]);
  api=dbMod;const app=appMod.initializeApp(firebaseConfig);const auth=authMod.getAuth(app);await authMod.signInAnonymously(auth);uid=auth.currentUser.uid;const db=api.getDatabase(app);
  api.onValue(api.ref(db,'.info/serverTimeOffset'),snap=>{offset=snap.val()||0;});
- api.onValue(api.ref(db,'.info/connected'),snap=>{connected=snap.val()===true;if(!local)status(connected?'Connexion Firebase établie':'Connexion interrompue — valeurs non actualisées');},fail);
+ api.onValue(api.ref(db,'.info/connected'),snap=>{connected=snap.val()===true;if(!local)status(connected?'Connexion établie':'Connexion interrompue — valeurs non actualisées');},fail);
  if(session){if(!/^[a-f0-9]{32}$/.test(session))throw Error('Lien de session invalide.');sessionRef=api.ref(db,'sessions/'+session);trainer=false;show();
  api.onValue(sessionRef,snap=>{const data=snap.val();if(!data){active=false;status('Session introuvable ou supprimée');return;}if(!validValues(data.values)){active=false;fail(new Error('Valeurs de session invalides.'));return;}values=data.values;active=data.active===true;ended=!active;lastSeen=data.updatedAt||0;render();},fail);
  setInterval(()=>{if(local)return;status(!active?'Session inactive ou terminée':!connected?'Connexion interrompue — valeurs figées':Date.now()+offset-lastSeen>=15000?'Signal formateur perdu — valeurs figées':'Réception active · simulation');},1000);
  }else{status('Prêt à démarrer');$('create').disabled=false;}
- $('create').onclick=async()=>{if(local)return;try{$('create').disabled=true;const bytes=crypto.getRandomValues(new Uint8Array(16));const id=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');sessionRef=api.ref(db,'sessions/'+id);await api.set(sessionRef,{owner:uid,active:true,values,updatedAt:api.serverTimestamp()});trainer=active=true;show();const url=new URL(location.href);url.search='?v=3';url.hash=new URLSearchParams({session:id}).toString();$('join').href=url.href;
+ $('create').onclick=async()=>{if(local)return;try{$('create').disabled=true;const bytes=crypto.getRandomValues(new Uint8Array(16));const id=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');sessionRef=api.ref(db,'sessions/'+id);await api.set(sessionRef,{owner:uid,active:true,values,updatedAt:api.serverTimestamp()});trainer=active=true;show();const url=new URL(location.href);url.search='?v=4';url.hash=new URLSearchParams({session:id}).toString();$('join').href=url.href;
  if(window.QRCode)new window.QRCode($('qr'),{text:url.href,width:200,height:200});else $('copyStatus').textContent='QR code indisponible : utilise le lien.';
  heartbeat=setInterval(publish,5000);status('Exercice en cours');
  }catch(e){$('create').disabled=false;fail(e);}};

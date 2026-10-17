@@ -58,3 +58,13 @@ body[data-mode="trainer"] #sound,body[data-mode="trainer"] .note{display:none}
 body[data-mode="trainer"] .top{margin-top:12px}
 body[data-mode="trainer"] #role{font-size:18px}
 body[data-mode="trainer"] #controls{margin-top:18px}
+
+/* Direct value entry is available only on the trainer's controls. */
+body[data-mode="trainer"] .meter{position:relative}
+.edit-value{position:absolute;right:10px;top:10px;display:grid;place-items:center;padding:0;margin:0;width:40px;height:40px;min-height:40px;border-radius:10px;background:#294650;color:#ffcd91}
+.edit-value:hover,.edit-value[aria-expanded="true"]{background:#385862}
+.edit-value:focus-visible{outline:2px solid #ffb45c;outline-offset:3px}
+.manual-entry{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid #38525a}
+.manual-entry input{grid-column:1/-1;min-width:0;min-height:48px;border:1px solid #6c8992;border-radius:9px;background:#19343d;color:#fff;padding:8px 12px;font:inherit;font-size:21px}
+.manual-entry small{grid-column:1/-1;color:#bed1d5;font-size:12px}
+.manual-entry button{padding:9px 6px;margin:0;font-size:14px;min-width:0}
